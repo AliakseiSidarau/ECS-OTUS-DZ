@@ -11,8 +11,6 @@ namespace EcsBattle
         [Header("Prefabs")]
         public GameObject RedUnitPrefab;
         public GameObject BlueUnitPrefab;
-        public GameObject RedBulletPrefab;
-        public GameObject BlueBulletPrefab;
         
         [Header("Config")]
         public int UnitsPerSide = 48;
