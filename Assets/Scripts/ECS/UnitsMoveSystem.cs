@@ -8,45 +8,61 @@ namespace EcsBattle
         public void Run(EcsSystems systems)
         {
             var world = systems.GetWorld();
-            var filter = world.Filter<Unit>().Inc<TransformRef>().End();
-            var units = world.GetPool<Unit>();
-            var transforms = world.GetPool<TransformRef>();
             
+            var filter = world
+                .Filter<MoveSpeed>()
+                .Inc<View>()
+                .Inc<MoveDirection>()
+                .Inc<TeamComponent>()
+                .Inc<StopDistance>()
+                .End();
+
+            var viewPool = world.GetPool<View>();
+            var speedPool = world.GetPool<MoveSpeed>();
+            var dirPool = world.GetPool<MoveDirection>();
+            var teamPool = world.GetPool<TeamComponent>();
+            var stopDistancePool = world.GetPool<StopDistance>();
+            var stoppedPool = world.GetPool<IsStopped>();
+
             float dt = Time.deltaTime;
-            
+
             foreach (int entity in filter)
             {
-                ref var unit = ref units.Get(entity);
-                if (unit.IsStopped) continue;
-                
-                ref var tr = ref transforms.Get(entity);
+                if (stoppedPool.Has(entity)) continue;
+
+                ref var view = ref viewPool.Get(entity);
+                ref var speed = ref speedPool.Get(entity);
+                ref var dir = ref dirPool.Get(entity);
+                ref var team = ref teamPool.Get(entity);
+                ref var stopDistance = ref stopDistancePool.Get(entity);
+
                 bool shouldStop = false;
-                
-                var enemyFilter = world.Filter<Unit>().Inc<TransformRef>().End();
-                foreach (int enemyEntity in enemyFilter)
+
+                foreach (int enemyEntity in filter)
                 {
                     if (enemyEntity == entity) continue;
-                    
-                    ref var enemy = ref units.Get(enemyEntity);
-                    if (enemy.Team == unit.Team) continue;
-                    
-                    ref var enemyTr = ref transforms.Get(enemyEntity);
-                    float dist = Vector3.Distance(tr.Transform.position, enemyTr.Transform.position);
-                    
-                    if (dist < unit.StopDistance)
+
+                    ref var enemyTeam = ref teamPool.Get(enemyEntity);
+                    if (enemyTeam.Value == team.Value) continue;
+
+                    ref var enemyView = ref viewPool.Get(enemyEntity);
+
+                    float sqrDist = (enemyView.Transform.position - view.Transform.position).sqrMagnitude;
+
+                    if (sqrDist < stopDistance.Value * stopDistance.Value)
                     {
                         shouldStop = true;
                         break;
                     }
                 }
-                
+
                 if (shouldStop)
                 {
-                    unit.IsStopped = true;
+                    stoppedPool.Add(entity);
                 }
                 else
                 {
-                    tr.Transform.position += tr.Transform.forward * unit.Speed * dt;
+                    view.Transform.position += dir.Value * speed.Value * dt;
                 }
             }
         }

@@ -9,86 +9,47 @@ namespace EcsBattle
         private EcsSystems _systems;
         
         [Header("Prefabs")]
-        public GameObject RedUnitPrefab;
-        public GameObject BlueUnitPrefab;
+        [SerializeField] private GameObject redUnitPrefab;
+        [SerializeField] private GameObject blueUnitPrefab;
         
         [Header("Config")]
-        public int UnitsPerSide = 48;
-        public float LineLength = 20f;
+        [SerializeField] private int unitsPerSide = 48;
+        [SerializeField] private float lineLength = 20f;
 
-        void Start()
+        private void Start()
         {
-            _world = new EcsWorld();
-            
-            _systems = new EcsSystems(_world);
-            _systems
-                .Add(new UnitsMoveSystem())
-                .Add(new UnitsShootSystem())
-                .Add(new BulletsMoveSystem())
-                .Add(new BulletsHitSystem());
-            _systems.Init();
-            
-            SpawnArmies();
+            InitEcs();
+            Spawn();
         }
 
-        void Update()
+        private void Update()
         {
             _systems?.Run();
         }
-        
-        void OnDestroy()
+
+        private void OnDestroy()
         {
             _systems?.Destroy();
             _world?.Destroy();
         }
-
-        void SpawnArmies()
+        
+        private void InitEcs()
         {
-            float halfLine = LineLength * 0.5f;
-            float unitsPerRow = UnitsPerSide / 3f;
-            float[] redZs = { -18f, -15f, -12f };
-            float[] blueZs = { 12f, 15f, 18f };
+            _world = new EcsWorld();
 
-            for (int row = 0; row < 3; row++)
-            {
-                for (int i = 0; i < unitsPerRow; i++)
-                {
-                    if (i >= unitsPerRow - 1) continue;
-                    
-                    float t = (float)i / (unitsPerRow - 1);
-                    float x = Mathf.Lerp(-halfLine, halfLine, t);
-                    
-                    Vector3 redPos = new Vector3(x, 0, redZs[row]);
-                    SpawnUnit(redPos, Team.Red, Quaternion.LookRotation(Vector3.forward), RedUnitPrefab);
-                    
-                    Vector3 bluePos = new Vector3(x, 0, blueZs[row]);
-                    SpawnUnit(bluePos, Team.Blue, Quaternion.LookRotation(Vector3.back), BlueUnitPrefab);
-                }
-            }
+            _systems = new EcsSystems(_world)
+                .Add(new UnitsMoveSystem())
+                .Add(new UnitsShootSystem())
+                .Add(new BulletsMoveSystem())
+                .Add(new BulletsHitSystem());
+
+            _systems.Init();
         }
 
-        void SpawnUnit(Vector3 pos, Team team, Quaternion rotation, GameObject prefab)
+        private void Spawn()
         {
-            var go = Object.Instantiate(prefab, pos, rotation);
-            go.name = team == Team.Red ? "RedUnit" : "BlueUnit";
-            
-            int entity = _world.NewEntity();
-
-            var trPool = _world.GetPool<TransformRef>();
-            var unitPool = _world.GetPool<Unit>();
-
-            ref TransformRef tr = ref trPool.Add(entity);
-            tr.Transform = go.transform;
-
-            ref Unit unit = ref unitPool.Add(entity);
-            unit.Team = team;
-            unit.Health = 3;
-            unit.Speed = 2f;
-            unit.ReloadTime = 0.5f;
-            unit.ReloadTimer = Random.Range(0f, 0.5f);
-            unit.StopDistance = 1f;
-            unit.AttackRange = 10f;
-            unit.IsStopped = false;
+            var spawner = new ArmySpawner(_world);
+            spawner.Spawn(unitsPerSide, lineLength, redUnitPrefab, blueUnitPrefab);
         }
     }
 }

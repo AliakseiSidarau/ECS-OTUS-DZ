@@ -8,50 +8,66 @@ namespace EcsBattle
         public void Run(EcsSystems systems)
         {
             var world = systems.GetWorld();
-            
-            var bulletFilter = world.Filter<Bullet>().Inc<TransformRef>().End();
-            var unitFilter = world.Filter<Unit>().Inc<TransformRef>().End();
-            
-            var bullets = world.GetPool<Bullet>();
-            var bulletTrs = world.GetPool<TransformRef>();
-            var units = world.GetPool<Unit>();
-            var unitTrs = world.GetPool<TransformRef>();
-            
+
+            var bulletFilter = world
+                .Filter<BulletTag>()
+                .Inc<View>()
+                .Inc<TeamComponent>()
+                .End();
+
+            var unitFilter = world
+                .Filter<Health>()
+                .Inc<View>()
+                .Inc<TeamComponent>()
+                .End();
+
+            var bulletViewPool = world.GetPool<View>();
+            var bulletTeamPool = world.GetPool<TeamComponent>();
+
+            var unitViewPool = world.GetPool<View>();
+            var unitTeamPool = world.GetPool<TeamComponent>();
+            var unitHealthPool = world.GetPool<Health>();
+
             const float hitRadius = 0.6f;
-            
+            float hitRadiusSqr = hitRadius * hitRadius;
+
             foreach (int bEntity in bulletFilter)
             {
-                ref var bullet = ref bullets.Get(bEntity);
-                ref var bTr = ref bulletTrs.Get(bEntity);
-                
+                ref var bView = ref bulletViewPool.Get(bEntity);
+                ref var bTeam = ref bulletTeamPool.Get(bEntity);
+
                 bool hit = false;
-                
+
                 foreach (int uEntity in unitFilter)
                 {
-                    ref var unit = ref units.Get(uEntity);
-                    if (unit.Team == bullet.Team) continue;
-                    
-                    ref var uTr = ref unitTrs.Get(uEntity);
-                    
-                    float sqrDist = (uTr.Transform.position - bTr.Transform.position).sqrMagnitude;
-                    if (sqrDist <= hitRadius * hitRadius)
+                    ref var uTeam = ref unitTeamPool.Get(uEntity);
+
+                    if (uTeam.Value == bTeam.Value)
+                        continue;
+
+                    ref var uView = ref unitViewPool.Get(uEntity);
+
+                    float sqrDist = (uView.Transform.position - bView.Transform.position).sqrMagnitude;
+
+                    if (sqrDist <= hitRadiusSqr)
                     {
-                        unit.Health -= 1;
-                        
-                        if (unit.Health <= 0)
+                        ref var health = ref unitHealthPool.Get(uEntity);
+                        health.Value -= 1;
+
+                        if (health.Value <= 0)
                         {
-                            Object.Destroy(uTr.Transform.gameObject);
+                            Object.Destroy(uView.Transform.gameObject);
                             world.DelEntity(uEntity);
                         }
-                        
+
                         hit = true;
                         break;
                     }
                 }
-                
+
                 if (hit)
                 {
-                    Object.Destroy(bTr.Transform.gameObject);
+                    Object.Destroy(bView.Transform.gameObject);
                     world.DelEntity(bEntity);
                 }
             }

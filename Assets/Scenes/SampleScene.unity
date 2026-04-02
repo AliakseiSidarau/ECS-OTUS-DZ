@@ -163,12 +163,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcf05a09f9ba48e9afb3a0d5dfdcd9b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EcsBattle.EcsStartup
-  RedUnitPrefab: {fileID: 5127930403253545416, guid: 637c21435e4ce4b7cade49b54523ac7a, type: 3}
-  BlueUnitPrefab: {fileID: 864138224619830619, guid: cdc5fc0df09444c88821bd3c28005976, type: 3}
-  RedBulletPrefab: {fileID: 6517063828442673763, guid: 11a079610c1e64ed2b2da6b672bec0f9, type: 3}
-  BlueBulletPrefab: {fileID: 5485628729697146883, guid: b4a4b523061a340be99157350ddbaee5, type: 3}
-  UnitsPerSide: 50
-  LineLength: 20
+  redUnitPrefab: {fileID: 5127930403253545416, guid: 637c21435e4ce4b7cade49b54523ac7a, type: 3}
+  blueUnitPrefab: {fileID: 864138224619830619, guid: cdc5fc0df09444c88821bd3c28005976, type: 3}
+  unitsPerSide: 48
+  lineLength: 20
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0

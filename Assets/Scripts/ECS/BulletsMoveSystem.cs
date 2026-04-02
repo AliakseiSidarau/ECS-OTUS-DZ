@@ -8,26 +8,39 @@ namespace EcsBattle
         public void Run(EcsSystems systems)
         {
             var world = systems.GetWorld();
-            var filter = world.Filter<Bullet>().Inc<TransformRef>().End();
-            var bullets = world.GetPool<Bullet>();
-            var transforms = world.GetPool<TransformRef>();
-            
+
+            var filter = world
+                .Filter<BulletTag>()
+                .Inc<View>()
+                .Inc<MoveSpeed>()
+                .Inc<LifeTime>()
+                .Inc<MoveDirection>()
+                .End();
+
+            var viewPool = world.GetPool<View>();
+            var speedPool = world.GetPool<MoveSpeed>();
+            var lifePool = world.GetPool<LifeTime>();
+            var dirPool = world.GetPool<MoveDirection>();
+
             float dt = Time.deltaTime;
-            
+
             foreach (int entity in filter)
             {
-                ref var bullet = ref bullets.Get(entity);
-                ref var tr = ref transforms.Get(entity);
-                
-                bullet.LifeTime -= dt;
-                if (bullet.LifeTime <= 0f)
+                ref var view = ref viewPool.Get(entity);
+                ref var speed = ref speedPool.Get(entity);
+                ref var life = ref lifePool.Get(entity);
+                ref var dir = ref dirPool.Get(entity);
+
+                life.Value -= dt;
+
+                if (life.Value <= 0f)
                 {
-                    Object.Destroy(tr.Transform.gameObject);
+                    Object.Destroy(view.Transform.gameObject);
                     world.DelEntity(entity);
                     continue;
                 }
-                
-                tr.Transform.position += tr.Transform.forward * bullet.Speed * dt;
+
+                view.Transform.position += dir.Value * speed.Value * dt;
             }
         }
     }
